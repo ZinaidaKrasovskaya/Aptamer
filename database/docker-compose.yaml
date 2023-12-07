@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  budibase:
+    image: budibase/budibase:latest
+    container_name: budi_app
+    ports:
+      - "10000:80"
+    volumes:
+      - ./budi_data:/data
+    restart: unless-stopped
+    networks:
+      - db_net
+
+  db:
+    image: postgres:16
+    container_name: budi_db
+    ports:
+      - "6132:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - db_net
+
+volumes:
+  budi_data:
+  pgdata:
+
+networks:
+  db_net:
