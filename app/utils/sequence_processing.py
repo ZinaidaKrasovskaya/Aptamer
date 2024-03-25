@@ -1,36 +1,37 @@
-import re
 import pandas as pd
+import re
+
+INVALID_DATA = dict()
 
 
-def clean_symbols(sequence: str) -> str:
-    """
-    Функция для очистки последовательности от сторонних символов
-    :param: sequence: аминокислотная последовательность
+def create_table(input_table: pd.DataFrame, sequence_column: str) -> pd.DataFrame:
+    aptamer_sequence_column = {sequence_column: []}
+    valid_sequences = []
+    invalid_sequences = []
 
-    :return: последовательность, содержащая лишь алфавитные символы
-    """
-    return re.sub(r'[^a-zA-Z]', '', sequence)
+    for index, row in input_table[sequence_column].items():
+        if type(row) != str:
+            continue
+
+        remove_non_letter(row)
+
+        if is_invalid_sequence(row):
+            invalid_sequences.append(row)
+        else:
+            valid_sequences.append(row)
+
+    INVALID_DATA[sequence_column] = invalid_sequences
+    aptamer_sequence_column[sequence_column] = valid_sequences
+    clean_table = pd.DataFrame.from_dict(aptamer_sequence_column)
+    return clean_table
 
 
-def validate_nucleotides(sequence: str) -> bool:
-    """
-    Функция для валидации последовательности
-    :param: sequence: аминокислотная последовательность
-
-    :return: результат сравнения набора нуклеотидов в последовательности
-        с набором A, T, G, C, U
-    """
-    return set(sequence) == set('AUTGC')
+def remove_non_letter(sequence) -> str:
+    return re.sub("[^a-zA-Z]", '', sequence)
 
 
-def validate_sequence(df: pd.DataFrame, seq_column: str) -> pd.DataFrame:
-    """
-    Функция для обработки последовательностей в таблице с данными
-    :param: df: таблица с данными
-    :param: seq_column: название колонки последовательности в таблице
-
-    :return: таблица с очищенной колонкой последовательности
-    """
-    df[seq_column] = df[seq_column].apply(clean_symbols)
-    df['incorrect_sequence'] = df[seq_column].apply(validate_nucleotides)
-    return df
+def is_invalid_sequence(sequence: str) -> str:
+    valid_nucleotides = ["A", "T", "G", "C", "U"]
+    for nucleotide in sequence:
+        if nucleotide not in valid_nucleotides:
+            return True
